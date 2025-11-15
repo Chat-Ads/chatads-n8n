@@ -1,0 +1,28 @@
+# Source files (only publish compiled dist/)
+credentials/
+nodes/
+index.ts
+
+# Config files
+tsconfig.json
+.eslintrc.*
+.prettierrc.*
+
+# Development files
+*.test.ts
+*.spec.ts
+.git/
+.github/
+.vscode/
+.idea/
+
+# Environment and local files
+.env
+.env.*
+*.log
+
+# macOS
+.DS_Store
+
+# Node
+node_modules/

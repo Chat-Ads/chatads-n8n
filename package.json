@@ -14,9 +14,18 @@
   "keywords": [
     "n8n",
     "chatads",
-    "automation"
+    "automation",
+    "n8n-community-node-package"
   ],
-  "author": "",
+  "author": "ChatAds",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Chat-Ads/chatads-n8n"
+  },
+  "files": [
+    "dist",
+    "nodes/ChatAds/chatads.svg"
+  ],
   "dependencies": {
     "n8n-core": "^1.33.0",
     "n8n-workflow": "^1.33.0"
