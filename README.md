@@ -1,0 +1,38 @@
+## ChatAds n8n Wrapper
+
+Custom n8n node + credential that call the FastAPI endpoint defined in `affiliate/chatads_backend.py`. The node wraps `/v1/chatads/messages`, handles authentication via the `x-api-key` header, and exposes every field from the `FunctionItem` Pydantic model so you can orchestrate ChatAds scoring inside n8n workflows.
+
+### Layout
+
+- `credentials/ChatAdsApi.credentials.ts` – stores the base URL, API key, and lightweight health-check path reused by every node call.
+- `nodes/ChatAds/ChatAds.node.ts` – single `Analyze Prospect` operation that posts to `/v1/chatads/messages`.
+- `nodes/ChatAds/chatads.svg` – lightweight icon so the node is recognizable inside the n8n editor.
+- `package.json`, `tsconfig.json`, `.gitignore` – helper files so you can compile to `dist/` with `tsc` (the artifacts n8n loads).
+
+### Using in n8n
+
+1. Install dependencies and build the TypeScript sources:
+   ```bash
+   cd n8n
+   npm install
+   npm run build
+   ```
+   This produces `dist/credentials/ChatAdsApi.credentials.js` and `dist/nodes/ChatAds/ChatAds.node.js`.
+2. Copy the compiled `dist` directory into your n8n custom nodes directory (for example `~/.n8n/custom/`) or publish the package to your internal npm registry and install it where your n8n instance can resolve it.
+3. Restart n8n. The new **ChatAds** node will appear under the “Transform” group. Add it to a workflow, select the `ChatAds API` credential (now includes a `Health Check Path` for the lightweight connectivity probe), and supply either:
+   - A simple `message` plus optional fields (IP, domain, etc.), or
+   - A raw JSON payload that matches the server-side `FunctionItem` contract (only documented fields are accepted; unexpected keys are rejected to prevent tampering).
+4. Optionally tune `Max Concurrent Requests` (default 4) and `Request Timeout (seconds)` for high-volume workflows. The node keeps item ordering consistent even when issuing requests in parallel.
+5. When executed, the node sends a POST request to `{{baseUrl}}/v1/chatads/messages` (configurable via the `Endpoint Override` parameter) with your `x-api-key` header and returns the FastAPI response verbatim so downstream nodes can branch on `success`, `error`, or any ad copy the backend generated.
+
+Because the wrapper still uses `this.helpers.httpRequest`, it honors n8n’s retry/backoff settings and the `Continue On Fail` toggle while layering per-node timeouts and error payloads for easier debugging.
+`Extra Fields (JSON)` is validated and limited to the same keys exposed in `FunctionItem`, so untrusted workflows cannot inject credentials or arbitrary payload fields.
+
+### Releasing/Patching
+
+1. Bump the version in `package.json` whenever you change behavior (validation rules, new fields, etc.).
+2. Run `npm run build` to regenerate `dist/` artifacts—**these compiled files are what n8n loads**, so they must stay in sync with the TypeScript sources.
+3. Copy/publish the updated `dist/` directory to your custom nodes location or npm registry, then restart n8n.
+4. If the backend `FunctionItem` schema changes, update both the parameter list in `ChatAds.node.ts` and the `ALLOWED_PAYLOAD_FIELDS` set near the top of the file to keep validation in sync.
+
+Consider keeping a short changelog (GitHub release notes or a `CHANGELOG.md`) so downstream workflows know when to reinstall the node.
