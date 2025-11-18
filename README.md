@@ -4,7 +4,7 @@ Custom n8n node + credential that call the FastAPI endpoint defined in `affiliat
 
 ### Layout
 
-- `credentials/ChatAdsApi.credentials.ts` – stores the base URL, API key, and lightweight health-check path reused by every node call.
+- `credentials/ChatAdsApi.credentials.ts` – stores the base URL and API key reused by every node call.
 - `nodes/ChatAds/ChatAds.node.ts` – single `Analyze Prospect` operation that posts to `/v1/chatads/messages`.
 - `nodes/ChatAds/chatads.svg` – lightweight icon so the node is recognizable inside the n8n editor.
 - `package.json`, `tsconfig.json`, `.gitignore` – helper files so you can compile to `dist/` with `tsc` (the artifacts n8n loads).
@@ -19,7 +19,7 @@ Custom n8n node + credential that call the FastAPI endpoint defined in `affiliat
    ```
    This produces `dist/credentials/ChatAdsApi.credentials.js` and `dist/nodes/ChatAds/ChatAds.node.js`.
 2. Copy the compiled `dist` directory into your n8n custom nodes directory (for example `~/.n8n/custom/`) or publish the package to your internal npm registry and install it where your n8n instance can resolve it.
-3. Restart n8n. The new **ChatAds** node will appear under the “Transform” group. Add it to a workflow, select the `ChatAds API` credential (now includes a `Health Check Path` for the lightweight connectivity probe), and supply either:
+3. Restart n8n. The new **ChatAds** node will appear under the “Transform” group. Add it to a workflow, select the `ChatAds API` credential, and supply either:
    - A simple `message` plus optional fields (IP, domain, etc.), or
    - A raw JSON payload that matches the server-side `FunctionItem` contract (only documented fields are accepted; unexpected keys are rejected to prevent tampering).
 4. Optionally tune `Max Concurrent Requests` (default 4) and `Request Timeout (seconds)` for high-volume workflows. The node keeps item ordering consistent even when issuing requests in parallel.

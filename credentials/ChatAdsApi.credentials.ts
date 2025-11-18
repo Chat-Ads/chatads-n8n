@@ -29,15 +29,7 @@ export class ChatAdsApi implements ICredentialType {
             default: '',
             required: true,
             description: 'Value to send in the x-api-key header when calling ChatAds',
-        },
-        {
-            displayName: 'Health Check Path',
-            name: 'healthCheckPath',
-            type: 'string',
-            default: '/health',
-            description:
-                'Relative path to a lightweight GET endpoint for credential testing (set to an endpoint that validates the API key without running the full scoring pipeline)',
-        },
+        }
     ];
 
     authenticate: IAuthenticateGeneric = {
@@ -52,7 +44,7 @@ export class ChatAdsApi implements ICredentialType {
     test: ICredentialTestRequest = {
         request: {
             method: 'GET',
-            url: '={{($credentials.baseUrl || "").replace(/\/+$/, "") + ((($credentials.healthCheckPath || "/health").startsWith("/")) ? ($credentials.healthCheckPath || "/health") : "/" + ($credentials.healthCheckPath || "/health"))}}',
+            url: '={{($credentials.baseUrl || "").replace(/\/+$/, "") || "https://app.getchatads.com"}}',
             qs: {
                 source: 'n8n-credential-test',
             },
