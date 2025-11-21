@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-chatads",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "n8n wrapper around the ChatAds FastAPI backend (affiliate/chatads_backend.py)",
   "license": "MIT",
   "main": "dist/index.js",
