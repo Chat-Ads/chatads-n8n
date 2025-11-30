@@ -10,8 +10,7 @@ import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
 const DEFAULT_ENDPOINT = '/v1/chatads/messages';
 
-const ALLOWED_PAYLOAD_FIELDS = new Set([
-    'timestamp',
+const OPTIONAL_FIELDS = new Set([
     'pageUrl',
     'pageTitle',
     'referrer',
@@ -19,16 +18,27 @@ const ALLOWED_PAYLOAD_FIELDS = new Set([
     'email',
     'type',
     'domain',
-    'userAgent',
     'ip',
     'reason',
     'company',
     'name',
-    'message',
     'country',
-    'language',
-    'website',
+    'override_parsing',
+    'response_quality',
 ]);
+
+const FIELD_ALIASES: Record<string, string> = {
+    pageurl: 'pageUrl',
+    page_url: 'pageUrl',
+    pagetitle: 'pageTitle',
+    page_title: 'pageTitle',
+    overrideparsing: 'override_parsing',
+    override_parsing: 'override_parsing',
+    responsequality: 'response_quality',
+    response_quality: 'response_quality',
+};
+
+const RESERVED_PAYLOAD_KEYS = new Set(['message', ...OPTIONAL_FIELDS]);
 
 const isPlainObject = (value: unknown): value is IDataObject =>
     value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -94,31 +104,6 @@ const coerceToString = (
     );
 };
 
-const sanitizeRecord = (
-    context: IExecuteFunctions,
-    payload: IDataObject,
-    source: string,
-    itemIndex: number,
-): IDataObject => {
-    const sanitized: IDataObject = {};
-
-    for (const [key, value] of Object.entries(payload)) {
-        if (value === undefined || value === null) {
-            continue;
-        }
-
-        const normalized = coerceToString(context, source, key, value, itemIndex);
-
-        if (normalized === '') {
-            continue;
-        }
-
-        sanitized[key] = normalized;
-    }
-
-    return sanitized;
-};
-
 const ensureMessage = (
     context: IExecuteFunctions,
     value: unknown,
@@ -143,6 +128,77 @@ const ensureMessage = (
     }
 
     return trimmed;
+};
+
+const normalizeFieldKey = (key: string): string => FIELD_ALIASES[key.toLowerCase()] ?? key;
+
+const normalizeOptionalField = (key: string): string | undefined => {
+    const normalized = normalizeFieldKey(key);
+    if (OPTIONAL_FIELDS.has(normalized)) {
+        return normalized;
+    }
+    return undefined;
+};
+
+const assertNoReservedConflicts = (
+    context: IExecuteFunctions,
+    source: string,
+    extras: IDataObject,
+    itemIndex: number,
+): void => {
+    const conflicts = Object.keys(extras).filter((key) => RESERVED_PAYLOAD_KEYS.has(normalizeFieldKey(key)));
+    if (conflicts.length > 0) {
+        throw new NodeOperationError(
+            context.getNode(),
+            `${source} contains reserved keys: ${conflicts.join(', ')}`,
+            { itemIndex },
+        );
+    }
+};
+
+const buildPayloadFromObject = (
+    context: IExecuteFunctions,
+    input: IDataObject,
+    source: string,
+    itemIndex: number,
+): IDataObject => {
+    const payload: IDataObject = {};
+    const extras: IDataObject = {};
+
+    const message = ensureMessage(context, input.message, itemIndex);
+    payload.message = message;
+
+    for (const [rawKey, rawValue] of Object.entries(input)) {
+        if (rawKey === 'message') {
+            continue;
+        }
+        if (rawValue === undefined || rawValue === null || rawValue === '') {
+            continue;
+        }
+
+        const optionalKey = normalizeOptionalField(rawKey);
+        if (optionalKey) {
+            if (optionalKey === 'override_parsing') {
+                if (typeof rawValue !== 'boolean') {
+                    throw new NodeOperationError(
+                        context.getNode(),
+                        `${source} field "${rawKey}" must be a boolean`,
+                        { itemIndex },
+                    );
+                }
+                payload[optionalKey] = rawValue;
+                continue;
+            }
+            payload[optionalKey] = coerceToString(context, source, rawKey, rawValue, itemIndex);
+            continue;
+        }
+
+        extras[rawKey] = rawValue;
+    }
+
+    assertNoReservedConflicts(context, source, extras, itemIndex);
+    Object.assign(payload, extras);
+    return payload;
 };
 
 const buildErrorPayload = (error: unknown): IDataObject => {
@@ -174,24 +230,6 @@ const buildErrorPayload = (error: unknown): IDataObject => {
     }
 
     return fallback;
-};
-
-const assertAllowedFields = (
-    context: IExecuteFunctions,
-    source: string,
-    payload: IDataObject,
-    allowed: Set<string>,
-    itemIndex: number,
-): void => {
-    for (const key of Object.keys(payload)) {
-        if (!allowed.has(key)) {
-            throw new NodeOperationError(
-                context.getNode(),
-                `${source} field "${key}" is not supported`,
-                { itemIndex },
-            );
-        }
-    }
 };
 
 export class ChatAds implements INodeType {
@@ -277,13 +315,6 @@ export class ChatAds implements INodeType {
                 },
                 options: [
                     {
-                        displayName: 'Timestamp',
-                        name: 'timestamp',
-                        type: 'string',
-                        default: '',
-                        description: 'ISO timestamp when the interaction occurred',
-                    },
-                    {
                         displayName: 'Page URL',
                         name: 'pageUrl',
                         type: 'string',
@@ -326,12 +357,6 @@ export class ChatAds implements INodeType {
                         default: '',
                     },
                     {
-                        displayName: 'User Agent',
-                        name: 'userAgent',
-                        type: 'string',
-                        default: '',
-                    },
-                    {
                         displayName: 'IP Address',
                         name: 'ip',
                         type: 'string',
@@ -362,16 +387,23 @@ export class ChatAds implements INodeType {
                         default: '',
                     },
                     {
-                        displayName: 'Language',
-                        name: 'language',
-                        type: 'string',
-                        default: '',
+                        displayName: 'Override Parsing',
+                        name: 'override_parsing',
+                        type: 'boolean',
+                        default: false,
+                        description: 'Force parsing on/off regardless of heuristics',
                     },
                     {
-                        displayName: 'Website',
-                        name: 'website',
-                        type: 'string',
-                        default: '',
+                        displayName: 'Response Quality',
+                        name: 'response_quality',
+                        type: 'options',
+                        options: [
+                            { name: 'High', value: 'high' },
+                            { name: 'Normal', value: 'normal' },
+                            { name: 'Low', value: 'low' },
+                        ],
+                        default: 'normal',
+                        description: 'Ask ChatAds to bias toward higher or lower fidelity responses',
                     },
                     {
                         displayName: 'Extra Fields (JSON)',
@@ -462,17 +494,7 @@ export class ChatAds implements INodeType {
                 if (jsonParameters) {
                     const bodyJson = this.getNodeParameter('bodyJson', itemIndex) as IDataObject | string;
                     const parsedBody = parseJsonObject(this, bodyJson, 'Body JSON', itemIndex);
-                    const sanitizedBody = sanitizeRecord(this, parsedBody, 'Body JSON', itemIndex);
-                    const message = ensureMessage(this, parsedBody.message, itemIndex);
-                    sanitizedBody.message = message;
-                    assertAllowedFields(
-                        this,
-                        'Body JSON',
-                        sanitizedBody,
-                        ALLOWED_PAYLOAD_FIELDS,
-                        itemIndex,
-                    );
-                    body = sanitizedBody;
+                    body = buildPayloadFromObject(this, parsedBody, 'Body JSON', itemIndex);
                 } else {
                     const rawMessage = this.getNodeParameter('message', itemIndex) as string;
                     const message = ensureMessage(this, rawMessage, itemIndex);
@@ -482,7 +504,7 @@ export class ChatAds implements INodeType {
                         {},
                     ) as IDataObject;
 
-                    body = { message };
+                    const constructed: IDataObject = { message };
                     for (const [field, value] of Object.entries(additionalFields)) {
                         if (value === undefined || value === null || value === '') {
                             continue;
@@ -495,39 +517,50 @@ export class ChatAds implements INodeType {
                                 'Extra fields JSON',
                                 itemIndex,
                             );
-                            const sanitizedExtras = sanitizeRecord(
-                                this,
-                                parsedExtras,
-                                'Extra fields JSON',
-                                itemIndex,
-                            );
-                            assertAllowedFields(
-                                this,
-                                'Extra fields JSON',
-                                sanitizedExtras,
-                                ALLOWED_PAYLOAD_FIELDS,
-                                itemIndex,
-                            );
-
-                            for (const [extraKey, extraValue] of Object.entries(sanitizedExtras)) {
+                            assertNoReservedConflicts(this, 'Extra fields JSON', parsedExtras, itemIndex);
+                            for (const [extraKey, extraValue] of Object.entries(parsedExtras)) {
+                                if (extraValue === undefined || extraValue === null) {
+                                    continue;
+                                }
                                 if (extraKey === 'message') {
                                     continue;
                                 }
-                                body[extraKey] = extraValue;
+                                constructed[extraKey] = extraValue;
                             }
                             continue;
                         }
 
-                        if (typeof value !== 'string') {
+                        const normalizedKey = normalizeOptionalField(field);
+                        if (!normalizedKey) {
                             throw new NodeOperationError(
                                 this.getNode(),
-                                `Field "${field}" must be provided as a string`,
+                                `Field "${field}" is not supported`,
                                 { itemIndex },
                             );
                         }
 
-                        body[field] = value;
+                        if (normalizedKey === 'override_parsing') {
+                            if (typeof value !== 'boolean') {
+                                throw new NodeOperationError(
+                                    this.getNode(),
+                                    `Field "${field}" must be provided as a boolean`,
+                                    { itemIndex },
+                                );
+                            }
+                            constructed[normalizedKey] = value;
+                            continue;
+                        }
+
+                        constructed[normalizedKey] = coerceToString(
+                            this,
+                            'Additional fields',
+                            field,
+                            value,
+                            itemIndex,
+                        );
                     }
+
+                    body = buildPayloadFromObject(this, constructed, 'Additional fields', itemIndex);
                 }
 
                 const response = await this.helpers.httpRequestWithAuthentication.call(
