@@ -1,6 +1,6 @@
 ## ChatAds n8n Wrapper
 
-Custom n8n node + credential that call the FastAPI endpoint defined in `affiliate/chatads_backend.py`. The node wraps `/v1/chatads/messages`, handles authentication via the `x-api-key` header, and exposes every field from the `FunctionItem` Pydantic model so you can orchestrate ChatAds scoring inside n8n workflows.
+Custom n8n node + credential that calls the ChatAds API endpoint `/v1/chatads/messages`. Handles authentication via the `x-api-key` header and exposes all supported API fields so you can orchestrate ChatAds inside n8n workflows.
 
 ### Layout
 
@@ -19,14 +19,14 @@ Custom n8n node + credential that call the FastAPI endpoint defined in `affiliat
    ```
    This produces `dist/credentials/ChatAdsApi.credentials.js` and `dist/nodes/ChatAds/ChatAds.node.js`.
 2. Copy the compiled `dist` directory into your n8n custom nodes directory (for example `~/.n8n/custom/`) or publish the package to your internal npm registry and install it where your n8n instance can resolve it.
-3. Restart n8n. The new **ChatAds** node will appear under the “Transform” group. Add it to a workflow, select the `ChatAds API` credential, and supply either:
-   - A simple `message` plus optional fields (IP, domain, etc.), or
-   - A raw JSON payload that matches the server-side `FunctionItem` contract (only documented fields are accepted; unexpected keys are rejected to prevent tampering).
+3. Restart n8n. The new **ChatAds** node will appear under the "Transform" group. Add it to a workflow, select the `ChatAds API` credential, and supply either:
+   - A simple `message` plus optional fields (IP, country, etc.), or
+   - A raw JSON payload (only documented fields are accepted; unexpected keys are rejected to prevent tampering).
 4. Optionally tune `Max Concurrent Requests` (default 4) and `Request Timeout (seconds)` for high-volume workflows. The node keeps item ordering consistent even when issuing requests in parallel.
 5. When executed, the node sends a POST request to `{{baseUrl}}/v1/chatads/messages` (configurable via the `Endpoint Override` parameter) with your `x-api-key` header and returns the FastAPI response verbatim so downstream nodes can branch on `success`, `error`, or any ad copy the backend generated.
 
-Because the wrapper still uses `this.helpers.httpRequest`, it honors n8n’s retry/backoff settings and the `Continue On Fail` toggle while layering per-node timeouts and error payloads for easier debugging.
-`Extra Fields (JSON)` is validated and limited to the same keys exposed in `FunctionItem`, so untrusted workflows cannot inject credentials or arbitrary payload fields.
+Because the wrapper still uses `this.helpers.httpRequest`, it honors n8n's retry/backoff settings and the `Continue On Fail` toggle while layering per-node timeouts and error payloads for easier debugging.
+`Extra Fields (JSON)` is validated to prevent conflicts with reserved parameter keys, so untrusted workflows cannot silently override core fields.
 
 ### Releasing/Patching
 
@@ -44,23 +44,9 @@ The node accepts the following fields (via parameters or `Extra Fields (JSON)`):
 | Field | Type | Description |
 |-------|------|-------------|
 | `message` | string (required) | Message to analyze (1-5000 chars) |
-| `country` | string | ISO 3166-1 alpha-2 country code for geo-targeting |
 | `ip` | string | Client IP address for geo-detection |
-| `domain` | string | Domain for context |
-| `page_url` / `pageUrl` | string | Page URL for context |
-| `page_title` / `pageTitle` | string | Page title for context |
-| `referrer` | string | HTTP referrer |
-| `email` | string | User email for context |
-| `company` | string | Company name for context |
-| `name` | string | User name for context |
-| `address` | string | Address for context |
-| `type` | string | Message type |
-| `reason` | string | Reason context |
-| `response_quality` | string | Response quality hint |
+| `country` | string | ISO 3166-1 alpha-2 country code for geo-targeting |
 | `message_analysis` | string | Extraction method: `"fast"`, `"balanced"` (default), `"thorough"` |
 | `fill_priority` | string | URL resolution: `"speed"` or `"coverage"` (default) |
 | `min_intent` | string | Intent filter: `"any"`, `"low"` (default), `"medium"`, `"high"` |
-| `override_parsing` | boolean | Override default parsing behavior |
 | `skip_message_analysis` | boolean | Skip NLP/LLM and use message directly as search query |
-
-Field names accept both `snake_case` and `camelCase` variants.

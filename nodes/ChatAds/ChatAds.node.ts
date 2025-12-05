@@ -11,20 +11,8 @@ import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 const DEFAULT_ENDPOINT = '/v1/chatads/messages';
 
 const OPTIONAL_FIELDS = new Set([
-    'pageUrl',
-    'pageTitle',
-    'referrer',
-    'address',
-    'email',
-    'type',
-    'domain',
     'ip',
-    'reason',
-    'company',
-    'name',
     'country',
-    'override_parsing',
-    'response_quality',
     'message_analysis',
     'fill_priority',
     'min_intent',
@@ -32,14 +20,6 @@ const OPTIONAL_FIELDS = new Set([
 ]);
 
 const FIELD_ALIASES: Record<string, string> = {
-    pageurl: 'pageUrl',
-    page_url: 'pageUrl',
-    pagetitle: 'pageTitle',
-    page_title: 'pageTitle',
-    overrideparsing: 'override_parsing',
-    override_parsing: 'override_parsing',
-    responsequality: 'response_quality',
-    response_quality: 'response_quality',
     messageanalysis: 'message_analysis',
     message_analysis: 'message_analysis',
     fillpriority: 'fill_priority',
@@ -190,7 +170,7 @@ const buildPayloadFromObject = (
 
         const optionalKey = normalizeOptionalField(rawKey);
         if (optionalKey) {
-            if (optionalKey === 'override_parsing' || optionalKey === 'skip_message_analysis') {
+            if (optionalKey === 'skip_message_analysis') {
                 if (typeof rawValue !== 'boolean') {
                     throw new NodeOperationError(
                         context.getNode(),
@@ -327,95 +307,18 @@ export class ChatAds implements INodeType {
                 },
                 options: [
                     {
-                        displayName: 'Page URL',
-                        name: 'pageUrl',
-                        type: 'string',
-                        default: '',
-                    },
-                    {
-                        displayName: 'Page Title',
-                        name: 'pageTitle',
-                        type: 'string',
-                        default: '',
-                    },
-                    {
-                        displayName: 'Referrer',
-                        name: 'referrer',
-                        type: 'string',
-                        default: '',
-                    },
-                    {
-                        displayName: 'Address',
-                        name: 'address',
-                        type: 'string',
-                        default: '',
-                    },
-                    {
-                        displayName: 'Email',
-                        name: 'email',
-                        type: 'string',
-                        default: '',
-                    },
-                    {
-                        displayName: 'Type',
-                        name: 'type',
-                        type: 'string',
-                        default: '',
-                    },
-                    {
-                        displayName: 'Domain',
-                        name: 'domain',
-                        type: 'string',
-                        default: '',
-                    },
-                    {
                         displayName: 'IP Address',
                         name: 'ip',
                         type: 'string',
                         default: '',
-                    },
-                    {
-                        displayName: 'Reason',
-                        name: 'reason',
-                        type: 'string',
-                        default: '',
-                    },
-                    {
-                        displayName: 'Company',
-                        name: 'company',
-                        type: 'string',
-                        default: '',
-                    },
-                    {
-                        displayName: 'Name',
-                        name: 'name',
-                        type: 'string',
-                        default: '',
+                        description: 'Client IP address for geo-detection',
                     },
                     {
                         displayName: 'Country',
                         name: 'country',
                         type: 'string',
                         default: '',
-                    },
-                    {
-                        displayName: 'Override Parsing',
-                        name: 'override_parsing',
-                        type: 'boolean',
-                        default: false,
-                        description: 'Force parsing on/off regardless of heuristics',
-                    },
-                    {
-                        displayName: 'Response Quality',
-                        name: 'response_quality',
-                        type: 'options',
-                        options: [
-                            { name: 'High', value: 'high' },
-                            { name: 'Normal', value: 'normal' },
-                            { name: 'Low', value: 'low' },
-                        ],
-                        default: 'normal',
-                        description: 'Ask ChatAds to bias toward higher or lower fidelity responses',
+                        description: 'ISO 3166-1 alpha-2 country code for geo-targeting',
                     },
                     {
                         displayName: 'Message Analysis',
@@ -468,7 +371,7 @@ export class ChatAds implements INodeType {
                             alwaysOpenEditWindow: true,
                         },
                         default: '{}',
-                        description: 'Raw JSON object merged into the payload as-is',
+                        description: 'JSON object containing additional fields to merge into the payload',
                     },
                 ],
             },
@@ -594,7 +497,7 @@ export class ChatAds implements INodeType {
                             );
                         }
 
-                        if (normalizedKey === 'override_parsing' || normalizedKey === 'skip_message_analysis') {
+                        if (normalizedKey === 'skip_message_analysis') {
                             if (typeof value !== 'boolean') {
                                 throw new NodeOperationError(
                                     this.getNode(),
