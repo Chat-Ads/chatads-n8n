@@ -33,6 +33,34 @@ Because the wrapper still uses `this.helpers.httpRequest`, it honors n8n’s ret
 1. Bump the version in `package.json` whenever you change behavior (validation rules, new fields, etc.).
 2. Run `npm run build` to regenerate `dist/` artifacts—**these compiled files are what n8n loads**, so they must stay in sync with the TypeScript sources.
 3. Copy/publish the updated `dist/` directory to your custom nodes location or npm registry, then restart n8n.
-4. If the backend `FunctionItem` schema changes, update both the parameter list in `ChatAds.node.ts` and the `ALLOWED_PAYLOAD_FIELDS` set near the top of the file to keep validation in sync.
+4. If the backend `FunctionItem` schema changes, update both the parameter list in `ChatAds.node.ts` and the `OPTIONAL_FIELDS` set near the top of the file to keep validation in sync.
 
 Consider keeping a short changelog (GitHub release notes or a `CHANGELOG.md`) so downstream workflows know when to reinstall the node.
+
+### Request Fields
+
+The node accepts the following fields (via parameters or `Extra Fields (JSON)`):
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `message` | string (required) | Message to analyze (1-5000 chars) |
+| `country` | string | ISO 3166-1 alpha-2 country code for geo-targeting |
+| `ip` | string | Client IP address for geo-detection |
+| `domain` | string | Domain for context |
+| `page_url` / `pageUrl` | string | Page URL for context |
+| `page_title` / `pageTitle` | string | Page title for context |
+| `referrer` | string | HTTP referrer |
+| `email` | string | User email for context |
+| `company` | string | Company name for context |
+| `name` | string | User name for context |
+| `address` | string | Address for context |
+| `type` | string | Message type |
+| `reason` | string | Reason context |
+| `response_quality` | string | Response quality hint |
+| `message_analysis` | string | Extraction method: `"fast"`, `"balanced"` (default), `"thorough"` |
+| `fill_priority` | string | URL resolution: `"speed"` or `"coverage"` (default) |
+| `min_intent` | string | Intent filter: `"any"`, `"low"` (default), `"medium"`, `"high"` |
+| `override_parsing` | boolean | Override default parsing behavior |
+| `skip_message_analysis` | boolean | Skip NLP/LLM and use message directly as search query |
+
+Field names accept both `snake_case` and `camelCase` variants.

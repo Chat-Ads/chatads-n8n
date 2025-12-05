@@ -25,6 +25,10 @@ const OPTIONAL_FIELDS = new Set([
     'country',
     'override_parsing',
     'response_quality',
+    'message_analysis',
+    'fill_priority',
+    'min_intent',
+    'skip_message_analysis',
 ]);
 
 const FIELD_ALIASES: Record<string, string> = {
@@ -36,6 +40,14 @@ const FIELD_ALIASES: Record<string, string> = {
     override_parsing: 'override_parsing',
     responsequality: 'response_quality',
     response_quality: 'response_quality',
+    messageanalysis: 'message_analysis',
+    message_analysis: 'message_analysis',
+    fillpriority: 'fill_priority',
+    fill_priority: 'fill_priority',
+    minintent: 'min_intent',
+    min_intent: 'min_intent',
+    skipmessageanalysis: 'skip_message_analysis',
+    skip_message_analysis: 'skip_message_analysis',
 };
 
 const RESERVED_PAYLOAD_KEYS = new Set(['message', ...OPTIONAL_FIELDS]);
@@ -178,7 +190,7 @@ const buildPayloadFromObject = (
 
         const optionalKey = normalizeOptionalField(rawKey);
         if (optionalKey) {
-            if (optionalKey === 'override_parsing') {
+            if (optionalKey === 'override_parsing' || optionalKey === 'skip_message_analysis') {
                 if (typeof rawValue !== 'boolean') {
                     throw new NodeOperationError(
                         context.getNode(),
@@ -406,6 +418,49 @@ export class ChatAds implements INodeType {
                         description: 'Ask ChatAds to bias toward higher or lower fidelity responses',
                     },
                     {
+                        displayName: 'Message Analysis',
+                        name: 'message_analysis',
+                        type: 'options',
+                        options: [
+                            { name: 'Fast', value: 'fast' },
+                            { name: 'Balanced', value: 'balanced' },
+                            { name: 'Thorough', value: 'thorough' },
+                        ],
+                        default: 'balanced',
+                        description: 'Keyword extraction method. Fast uses NLP only (~50ms), others use LLM.',
+                    },
+                    {
+                        displayName: 'Fill Priority',
+                        name: 'fill_priority',
+                        type: 'options',
+                        options: [
+                            { name: 'Speed', value: 'speed' },
+                            { name: 'Coverage', value: 'coverage' },
+                        ],
+                        default: 'coverage',
+                        description: 'URL resolution fallback strategy',
+                    },
+                    {
+                        displayName: 'Min Intent',
+                        name: 'min_intent',
+                        type: 'options',
+                        options: [
+                            { name: 'Any', value: 'any' },
+                            { name: 'Low', value: 'low' },
+                            { name: 'Medium', value: 'medium' },
+                            { name: 'High', value: 'high' },
+                        ],
+                        default: 'low',
+                        description: 'Minimum purchase intent level for affiliate resolution',
+                    },
+                    {
+                        displayName: 'Skip Message Analysis',
+                        name: 'skip_message_analysis',
+                        type: 'boolean',
+                        default: false,
+                        description: 'Skip NLP/LLM extraction and use message directly as search query. Overrides message_analysis, min_intent, and fill_priority.',
+                    },
+                    {
                         displayName: 'Extra Fields (JSON)',
                         name: 'extraFieldsJson',
                         type: 'json',
@@ -539,7 +594,7 @@ export class ChatAds implements INodeType {
                             );
                         }
 
-                        if (normalizedKey === 'override_parsing') {
+                        if (normalizedKey === 'override_parsing' || normalizedKey === 'skip_message_analysis') {
                             if (typeof value !== 'boolean') {
                                 throw new NodeOperationError(
                                     this.getNode(),
