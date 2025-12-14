@@ -44,9 +44,9 @@ The node accepts the following fields (via parameters or `Extra Fields (JSON)`):
 | Field | Type | Description |
 |-------|------|-------------|
 | `message` | string (required) | Message to analyze (1-5000 chars) |
-| `ip` | string | Client IP address for geo-detection |
-| `country` | string | ISO 3166-1 alpha-2 country code for geo-targeting |
-| `message_analysis` | string | Extraction method: `"fast"`, `"balanced"` (default), `"thorough"` |
-| `fill_priority` | string | URL resolution: `"speed"` or `"coverage"` (default) |
-| `min_intent` | string | Intent filter: `"any"`, `"low"` (default), `"medium"`, `"high"` |
-| `skip_message_analysis` | boolean | Skip NLP/LLM and use message directly as search query |
+| `ip` | string | IPv4 address for country detection (max 64 characters) |
+| `country` | string | Country code (e.g., 'US'). If provided, skips IP-based country detection |
+| `message_analysis` | string | Controls keyword extraction method. Use 'fast' to optimize for speed, 'thorough' (default) to optimize for best keyword selection |
+| `fill_priority` | string | Controls affiliate link discovery. Use 'speed' to optimize for speed, 'coverage' (default) to ping multiple sources for the right affiliate link |
+| `min_intent` | string | Minimum purchase intent level required for affiliate resolution. 'any' = no filtering, 'low' (default) = filter garbage, 'medium' = balanced quality/fill, 'high' = high-intent keywords only |
+| `skip_message_analysis` | boolean | Treat exact message as product keyword. When true, goes straight to affiliate link discovery without keyword extraction |

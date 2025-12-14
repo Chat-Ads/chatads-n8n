@@ -311,14 +311,14 @@ export class ChatAds implements INodeType {
                         name: 'ip',
                         type: 'string',
                         default: '',
-                        description: 'Client IP address for geo-detection',
+                        description: 'IPv4 address for country detection (max 64 characters)',
                     },
                     {
                         displayName: 'Country',
                         name: 'country',
                         type: 'string',
                         default: '',
-                        description: 'ISO 3166-1 alpha-2 country code for geo-targeting',
+                        description: "Country code (e.g., 'US'). If provided, skips IP-based country detection",
                     },
                     {
                         displayName: 'Message Analysis',
@@ -326,11 +326,10 @@ export class ChatAds implements INodeType {
                         type: 'options',
                         options: [
                             { name: 'Fast', value: 'fast' },
-                            { name: 'Balanced', value: 'balanced' },
                             { name: 'Thorough', value: 'thorough' },
                         ],
-                        default: 'balanced',
-                        description: 'Keyword extraction method. Fast uses NLP only (~50ms), others use LLM.',
+                        default: 'thorough',
+                        description: 'Controls keyword extraction method. Use fast to optimize for speed, thorough to optimize for best keyword selection.',
                     },
                     {
                         displayName: 'Fill Priority',
@@ -341,7 +340,7 @@ export class ChatAds implements INodeType {
                             { name: 'Coverage', value: 'coverage' },
                         ],
                         default: 'coverage',
-                        description: 'URL resolution fallback strategy',
+                        description: 'Controls affiliate link discovery. Use speed to optimize for speed, coverage to ping multiple sources for the right affiliate link',
                     },
                     {
                         displayName: 'Min Intent',
@@ -354,14 +353,14 @@ export class ChatAds implements INodeType {
                             { name: 'High', value: 'high' },
                         ],
                         default: 'low',
-                        description: 'Minimum purchase intent level for affiliate resolution',
+                        description: "Minimum purchase intent level required for affiliate resolution. 'any' = no filtering, 'low' = filter garbage, 'medium' = balanced quality/fill, 'high' = high-intent keywords only",
                     },
                     {
                         displayName: 'Skip Message Analysis',
                         name: 'skip_message_analysis',
                         type: 'boolean',
                         default: false,
-                        description: 'Skip NLP/LLM extraction and use message directly as search query. Overrides message_analysis, min_intent, and fill_priority.',
+                        description: 'Treat exact message as product keyword. When true, goes straight to affiliate link discovery without keyword extraction',
                     },
                     {
                         displayName: 'Extra Fields (JSON)',
