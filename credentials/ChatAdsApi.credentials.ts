@@ -15,9 +15,9 @@ export class ChatAdsApi implements ICredentialType {
             displayName: 'Base URL',
             name: 'baseUrl',
             type: 'string',
-            default: 'https://app.getchatads.com',
+            default: 'https://api.getchatads.com',
             description:
-                'Root domain where the ChatAds FastAPI service (affiliate/chatads_backend.py) is deployed',
+                'ChatAds API endpoint URL',
         },
         {
             displayName: 'API Key',
@@ -44,7 +44,7 @@ export class ChatAdsApi implements ICredentialType {
     test: ICredentialTestRequest = {
         request: {
             method: 'GET',
-            url: '={{($credentials.baseUrl || "").replace(/\/+$/, "") || "https://app.getchatads.com"}}',
+            url: '={{($credentials.baseUrl || "").replace(/\/+$/, "") || "https://api.getchatads.com"}}',
             qs: {
                 source: 'n8n-credential-test',
             },

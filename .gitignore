@@ -1,6 +1,10 @@
 node_modules
 dist
 
+# Environment variables
+.env
+.env.local
+
 # macOS system files
 .DS_Store
 **/.DS_Store

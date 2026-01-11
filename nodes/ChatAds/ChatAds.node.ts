@@ -17,6 +17,8 @@ const OPTIONAL_FIELDS = new Set([
     'fill_priority',
     'min_intent',
     'skip_message_analysis',
+    'demo',
+    'max_offers',
 ]);
 
 const FIELD_ALIASES: Record<string, string> = {
@@ -28,6 +30,8 @@ const FIELD_ALIASES: Record<string, string> = {
     min_intent: 'min_intent',
     skipmessageanalysis: 'skip_message_analysis',
     skip_message_analysis: 'skip_message_analysis',
+    maxoffers: 'max_offers',
+    max_offers: 'max_offers',
 };
 
 const RESERVED_PAYLOAD_KEYS = new Set(['message', ...OPTIONAL_FIELDS]);
@@ -170,11 +174,22 @@ const buildPayloadFromObject = (
 
         const optionalKey = normalizeOptionalField(rawKey);
         if (optionalKey) {
-            if (optionalKey === 'skip_message_analysis') {
+            if (optionalKey === 'skip_message_analysis' || optionalKey === 'demo') {
                 if (typeof rawValue !== 'boolean') {
                     throw new NodeOperationError(
                         context.getNode(),
                         `${source} field "${rawKey}" must be a boolean`,
+                        { itemIndex },
+                    );
+                }
+                payload[optionalKey] = rawValue;
+                continue;
+            }
+            if (optionalKey === 'max_offers') {
+                if (typeof rawValue !== 'number') {
+                    throw new NodeOperationError(
+                        context.getNode(),
+                        `${source} field "${rawKey}" must be a number`,
                         { itemIndex },
                     );
                 }
@@ -311,7 +326,7 @@ export class ChatAds implements INodeType {
                         name: 'ip',
                         type: 'string',
                         default: '',
-                        description: 'IPv4 address for country detection (max 64 characters)',
+                        description: 'IPv4/IPv6 address for country detection (max 45 characters)',
                     },
                     {
                         displayName: 'Country',
@@ -361,6 +376,24 @@ export class ChatAds implements INodeType {
                         type: 'boolean',
                         default: false,
                         description: 'Treat exact message as product keyword. When true, goes straight to affiliate link discovery without keyword extraction',
+                    },
+                    {
+                        displayName: 'Demo Mode',
+                        name: 'demo',
+                        type: 'boolean',
+                        default: false,
+                        description: 'Enable demo mode',
+                    },
+                    {
+                        displayName: 'Max Offers',
+                        name: 'max_offers',
+                        type: 'number',
+                        typeOptions: {
+                            minValue: 1,
+                            maxValue: 2,
+                        },
+                        default: 1,
+                        description: 'Maximum number of affiliate offers to return (1-2)',
                     },
                     {
                         displayName: 'Extra Fields (JSON)',
@@ -496,11 +529,23 @@ export class ChatAds implements INodeType {
                             );
                         }
 
-                        if (normalizedKey === 'skip_message_analysis') {
+                        if (normalizedKey === 'skip_message_analysis' || normalizedKey === 'demo') {
                             if (typeof value !== 'boolean') {
                                 throw new NodeOperationError(
                                     this.getNode(),
                                     `Field "${field}" must be provided as a boolean`,
+                                    { itemIndex },
+                                );
+                            }
+                            constructed[normalizedKey] = value;
+                            continue;
+                        }
+
+                        if (normalizedKey === 'max_offers') {
+                            if (typeof value !== 'number') {
+                                throw new NodeOperationError(
+                                    this.getNode(),
+                                    `Field "${field}" must be provided as a number`,
                                     { itemIndex },
                                 );
                             }
