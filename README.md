@@ -23,7 +23,7 @@ Custom n8n node + credential that calls the ChatAds API endpoint `/v1/chatads/me
    - A simple `message` plus optional fields (IP, country, etc.), or
    - A raw JSON payload (only documented fields are accepted; unexpected keys are rejected to prevent tampering).
 4. Optionally tune `Max Concurrent Requests` (default 4) and `Request Timeout (seconds)` for high-volume workflows. The node keeps item ordering consistent even when issuing requests in parallel.
-5. When executed, the node sends a POST request to `{{baseUrl}}/v1/chatads/messages` (configurable via the `Endpoint Override` parameter) with your `x-api-key` header and returns the FastAPI response verbatim so downstream nodes can branch on `success`, `error`, or any ad copy the backend generated.
+5. When executed, the node sends a POST request to `{{baseUrl}}/v1/chatads/messages` (configurable via the `Endpoint Override` parameter) with your `x-api-key` header and returns the API response verbatim so downstream nodes can branch on `error` (null for success) or any affiliate offers the backend generated.
 
 Because the wrapper still uses `this.helpers.httpRequest`, it honors n8n's retry/backoff settings and the `Continue On Fail` toggle while layering per-node timeouts and error payloads for easier debugging.
 `Extra Fields (JSON)` is validated to prevent conflicts with reserved parameter keys, so untrusted workflows cannot silently override core fields.
@@ -44,9 +44,6 @@ The node accepts the following fields (via parameters or `Extra Fields (JSON)`):
 | Field | Type | Description |
 |-------|------|-------------|
 | `message` | string (required) | Message to analyze (1-5000 chars) |
-| `ip` | string | IPv4 address for country detection (max 64 characters) |
+| `ip` | string | IPv4/IPv6 address for country detection (max 45 characters) |
 | `country` | string | Country code (e.g., 'US'). If provided, skips IP-based country detection |
-| `message_analysis` | string | Controls keyword extraction method. Use 'fast' to optimize for speed, 'thorough' (default) to optimize for best keyword selection |
-| `fill_priority` | string | Controls affiliate link discovery. Use 'speed' to optimize for speed, 'coverage' (default) to ping multiple sources for the right affiliate link |
-| `min_intent` | string | Minimum purchase intent level required for affiliate resolution. 'any' = no filtering, 'low' (default) = filter garbage, 'medium' = balanced quality/fill, 'high' = high-intent keywords only |
-| `skip_message_analysis` | boolean | Treat exact message as product keyword. When true, goes straight to affiliate link discovery without keyword extraction |
+| `quality` | string | Variable for playing around with keyword quality, link accuracy, and response times. 'fast' = quickest, but less likely to find a working affiliate link (~150ms), 'standard' = strong keyword quality and decent link matching (~1.4s), 'best' = strong keyword and strong matching (~2.5s). |

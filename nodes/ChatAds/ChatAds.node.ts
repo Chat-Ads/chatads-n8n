@@ -13,25 +13,13 @@ const DEFAULT_ENDPOINT = '/v1/chatads/messages';
 const OPTIONAL_FIELDS = new Set([
     'ip',
     'country',
-    'message_analysis',
-    'fill_priority',
-    'min_intent',
-    'skip_message_analysis',
+    'quality',
     'demo',
-    'max_offers',
 ]);
 
 const FIELD_ALIASES: Record<string, string> = {
-    messageanalysis: 'message_analysis',
-    message_analysis: 'message_analysis',
-    fillpriority: 'fill_priority',
-    fill_priority: 'fill_priority',
-    minintent: 'min_intent',
-    min_intent: 'min_intent',
-    skipmessageanalysis: 'skip_message_analysis',
-    skip_message_analysis: 'skip_message_analysis',
-    maxoffers: 'max_offers',
-    max_offers: 'max_offers',
+    fillpriority: 'quality',
+    quality: 'quality',
 };
 
 const RESERVED_PAYLOAD_KEYS = new Set(['message', ...OPTIONAL_FIELDS]);
@@ -174,22 +162,11 @@ const buildPayloadFromObject = (
 
         const optionalKey = normalizeOptionalField(rawKey);
         if (optionalKey) {
-            if (optionalKey === 'skip_message_analysis' || optionalKey === 'demo') {
+            if (optionalKey === 'demo') {
                 if (typeof rawValue !== 'boolean') {
                     throw new NodeOperationError(
                         context.getNode(),
                         `${source} field "${rawKey}" must be a boolean`,
-                        { itemIndex },
-                    );
-                }
-                payload[optionalKey] = rawValue;
-                continue;
-            }
-            if (optionalKey === 'max_offers') {
-                if (typeof rawValue !== 'number') {
-                    throw new NodeOperationError(
-                        context.getNode(),
-                        `${source} field "${rawKey}" must be a number`,
                         { itemIndex },
                     );
                 }
@@ -336,46 +313,16 @@ export class ChatAds implements INodeType {
                         description: "Country code (e.g., 'US'). If provided, skips IP-based country detection",
                     },
                     {
-                        displayName: 'Message Analysis',
-                        name: 'message_analysis',
+                        displayName: 'Quality',
+                        name: 'quality',
                         type: 'options',
                         options: [
                             { name: 'Fast', value: 'fast' },
-                            { name: 'Thorough', value: 'thorough' },
+                            { name: 'Standard', value: 'standard' },
+                            { name: 'Best', value: 'best' },
                         ],
-                        default: 'thorough',
-                        description: 'Controls keyword extraction method. Use fast to optimize for speed, thorough to optimize for best keyword selection.',
-                    },
-                    {
-                        displayName: 'Fill Priority',
-                        name: 'fill_priority',
-                        type: 'options',
-                        options: [
-                            { name: 'Speed', value: 'speed' },
-                            { name: 'Coverage', value: 'coverage' },
-                        ],
-                        default: 'coverage',
-                        description: 'Controls affiliate link discovery. Use speed to optimize for speed, coverage to ping multiple sources for the right affiliate link',
-                    },
-                    {
-                        displayName: 'Min Intent',
-                        name: 'min_intent',
-                        type: 'options',
-                        options: [
-                            { name: 'Any', value: 'any' },
-                            { name: 'Low', value: 'low' },
-                            { name: 'Medium', value: 'medium' },
-                            { name: 'High', value: 'high' },
-                        ],
-                        default: 'low',
-                        description: "Minimum purchase intent level required for affiliate resolution. 'any' = no filtering, 'low' = filter garbage, 'medium' = balanced quality/fill, 'high' = high-intent keywords only",
-                    },
-                    {
-                        displayName: 'Skip Message Analysis',
-                        name: 'skip_message_analysis',
-                        type: 'boolean',
-                        default: false,
-                        description: 'Treat exact message as product keyword. When true, goes straight to affiliate link discovery without keyword extraction',
+                        default: 'standard',
+                        description: 'Variable for playing around with keyword quality, link accuracy, and response times. fast = quickest, but less likely to find a working affiliate link (~150ms), standard = strong keyword quality and decent link matching (~1.4s), best = strong keyword and strong matching (~2.5s).',
                     },
                     {
                         displayName: 'Demo Mode',
@@ -383,17 +330,6 @@ export class ChatAds implements INodeType {
                         type: 'boolean',
                         default: false,
                         description: 'Enable demo mode',
-                    },
-                    {
-                        displayName: 'Max Offers',
-                        name: 'max_offers',
-                        type: 'number',
-                        typeOptions: {
-                            minValue: 1,
-                            maxValue: 2,
-                        },
-                        default: 1,
-                        description: 'Maximum number of affiliate offers to return (1-2)',
                     },
                     {
                         displayName: 'Extra Fields (JSON)',
@@ -529,23 +465,11 @@ export class ChatAds implements INodeType {
                             );
                         }
 
-                        if (normalizedKey === 'skip_message_analysis' || normalizedKey === 'demo') {
+                        if (normalizedKey === 'demo') {
                             if (typeof value !== 'boolean') {
                                 throw new NodeOperationError(
                                     this.getNode(),
                                     `Field "${field}" must be provided as a boolean`,
-                                    { itemIndex },
-                                );
-                            }
-                            constructed[normalizedKey] = value;
-                            continue;
-                        }
-
-                        if (normalizedKey === 'max_offers') {
-                            if (typeof value !== 'number') {
-                                throw new NodeOperationError(
-                                    this.getNode(),
-                                    `Field "${field}" must be provided as a number`,
                                     { itemIndex },
                                 );
                             }
