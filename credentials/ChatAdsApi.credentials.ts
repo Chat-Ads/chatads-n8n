@@ -44,10 +44,7 @@ export class ChatAdsApi implements ICredentialType {
     test: ICredentialTestRequest = {
         request: {
             method: 'GET',
-            url: '={{($credentials.baseUrl || "").replace(/\/+$/, "") || "https://api.getchatads.com"}}',
-            qs: {
-                source: 'n8n-credential-test',
-            },
+            url: '={{($credentials.baseUrl || "").replace(/\/+$/, "") || "https://api.getchatads.com"}}/v1/auth/verify',
         },
     };
 }

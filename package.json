@@ -1,12 +1,12 @@
 {
   "name": "n8n-nodes-chatads",
   "version": "0.1.7",
-  "description": "n8n wrapper around the ChatAds FastAPI backend (affiliate/chatads_backend.py)",
+  "description": "n8n community node for the ChatAds API",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && cp nodes/ChatAds/chatads.svg dist/nodes/ChatAds/chatads.svg",
     "clean": "rimraf dist",
     "lint": "eslint \"{credentials,nodes}/**/*.ts\"",
     "format": "prettier --write \"{credentials,nodes}/**/*.ts\""
@@ -23,11 +23,9 @@
     "url": "https://github.com/Chat-Ads/chatads-n8n"
   },
   "files": [
-    "dist",
-    "nodes/ChatAds/chatads.svg"
+    "dist"
   ],
-  "dependencies": {
-    "n8n-core": "^1.33.0",
+  "peerDependencies": {
     "n8n-workflow": "^1.33.0"
   },
   "devDependencies": {

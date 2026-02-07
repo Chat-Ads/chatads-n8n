@@ -14,7 +14,6 @@ const OPTIONAL_FIELDS = new Set([
     'ip',
     'country',
     'quality',
-    'demo',
 ]);
 
 const FIELD_ALIASES: Record<string, string> = {
@@ -162,17 +161,6 @@ const buildPayloadFromObject = (
 
         const optionalKey = normalizeOptionalField(rawKey);
         if (optionalKey) {
-            if (optionalKey === 'demo') {
-                if (typeof rawValue !== 'boolean') {
-                    throw new NodeOperationError(
-                        context.getNode(),
-                        `${source} field "${rawKey}" must be a boolean`,
-                        { itemIndex },
-                    );
-                }
-                payload[optionalKey] = rawValue;
-                continue;
-            }
             payload[optionalKey] = coerceToString(context, source, rawKey, rawValue, itemIndex);
             continue;
         }
@@ -224,7 +212,7 @@ export class ChatAds implements INodeType {
         group: ['transform'],
         version: 1,
         subtitle: '={{$parameter["operation"]}}',
-        description: 'Wrapper around the ChatAds FastAPI prospect scoring endpoint',
+        description: 'Interact with the ChatAds API',
         defaults: {
             name: 'ChatAds',
         },
@@ -323,13 +311,6 @@ export class ChatAds implements INodeType {
                         ],
                         default: 'standard',
                         description: 'Variable for playing around with keyword quality, link accuracy, and response times. fast = quickest, but less likely to find a working affiliate link (~150ms), standard = strong keyword quality and decent link matching (~1.4s), best = strong keyword and strong matching (~2.5s).',
-                    },
-                    {
-                        displayName: 'Demo Mode',
-                        name: 'demo',
-                        type: 'boolean',
-                        default: false,
-                        description: 'Enable demo mode',
                     },
                     {
                         displayName: 'Extra Fields (JSON)',
@@ -463,18 +444,6 @@ export class ChatAds implements INodeType {
                                 `Field "${field}" is not supported`,
                                 { itemIndex },
                             );
-                        }
-
-                        if (normalizedKey === 'demo') {
-                            if (typeof value !== 'boolean') {
-                                throw new NodeOperationError(
-                                    this.getNode(),
-                                    `Field "${field}" must be provided as a boolean`,
-                                    { itemIndex },
-                                );
-                            }
-                            constructed[normalizedKey] = value;
-                            continue;
                         }
 
                         constructed[normalizedKey] = coerceToString(

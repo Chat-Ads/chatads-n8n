@@ -4,7 +4,7 @@ Custom n8n node for integrating ChatAds with n8n workflows.
 
 ## Package Info
 
-- **Package name**: `@getchatads/chatads-n8n`
+- **Package name**: `n8n-nodes-chatads`
 - **Language**: TypeScript
 - **Platform**: n8n workflow automation
 
@@ -19,12 +19,12 @@ Allows n8n users to:
 
 In n8n:
 1. Install via Community Nodes
-2. Search for "@getchatads/chatads-n8n"
+2. Search for "n8n-nodes-chatads"
 3. Install and configure with your API key
 
 Or install manually:
 ```bash
-npm install @getchatads/chatads-n8n
+npm install n8n-nodes-chatads
 ```
 
 ## Usage

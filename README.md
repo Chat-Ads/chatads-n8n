@@ -25,7 +25,7 @@ Custom n8n node + credential that calls the ChatAds API endpoint `/v1/chatads/me
 4. Optionally tune `Max Concurrent Requests` (default 4) and `Request Timeout (seconds)` for high-volume workflows. The node keeps item ordering consistent even when issuing requests in parallel.
 5. When executed, the node sends a POST request to `{{baseUrl}}/v1/chatads/messages` (configurable via the `Endpoint Override` parameter) with your `x-api-key` header and returns the API response verbatim so downstream nodes can branch on `error` (null for success) or any affiliate offers the backend generated.
 
-Because the wrapper still uses `this.helpers.httpRequest`, it honors n8n's retry/backoff settings and the `Continue On Fail` toggle while layering per-node timeouts and error payloads for easier debugging.
+Because the wrapper uses `this.helpers.httpRequestWithAuthentication`, it honors n8n's retry/backoff settings and the `Continue On Fail` toggle while layering per-node timeouts and error payloads for easier debugging.
 `Extra Fields (JSON)` is validated to prevent conflicts with reserved parameter keys, so untrusted workflows cannot silently override core fields.
 
 ### Releasing/Patching
