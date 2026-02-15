@@ -46,4 +46,4 @@ The node accepts the following fields (via parameters or `Extra Fields (JSON)`):
 | `message` | string (required) | Message to analyze (1-5000 chars) |
 | `ip` | string | IPv4/IPv6 address for country detection (max 45 characters) |
 | `country` | string | Country code (e.g., 'US'). If provided, skips IP-based country detection |
-| `quality` | string | Variable for playing around with keyword quality, link accuracy, and response times. 'fast' = quickest, but less likely to find a working affiliate link (~150ms), 'standard' = strong keyword quality and decent link matching (~1.4s), 'best' = strong keyword and strong matching (~2.5s). |
+| `input_type` | string | Content type: `text` (default), `image_url`, or `image_file` |

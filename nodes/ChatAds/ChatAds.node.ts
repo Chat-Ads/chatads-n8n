@@ -14,11 +14,13 @@ const OPTIONAL_FIELDS = new Set([
     'ip',
     'country',
     'quality',
+    'input_type',
 ]);
 
 const FIELD_ALIASES: Record<string, string> = {
     fillpriority: 'quality',
     quality: 'quality',
+    input_type: 'input_type',
 };
 
 const RESERVED_PAYLOAD_KEYS = new Set(['message', ...OPTIONAL_FIELDS]);
@@ -311,6 +313,18 @@ export class ChatAds implements INodeType {
                         ],
                         default: 'standard',
                         description: 'Variable for playing around with keyword quality, link accuracy, and response times. fast = quickest, but less likely to find a working affiliate link (~150ms), standard = strong keyword quality and decent link matching (~1.4s), best = strong keyword and strong matching (~2.5s).',
+                    },
+                    {
+                        displayName: 'Input Type',
+                        name: 'input_type',
+                        type: 'options',
+                        options: [
+                            { name: 'Text', value: 'text' },
+                            { name: 'Image URL', value: 'image_url' },
+                            { name: 'Image File', value: 'image_file' },
+                        ],
+                        default: 'text',
+                        description: 'Content type of the input message. Use "image_url" to analyze an image from a URL, or "image_file" for an uploaded image.',
                     },
                     {
                         displayName: 'Extra Fields (JSON)',
